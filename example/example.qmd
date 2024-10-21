@@ -1,0 +1,39 @@
+---
+title: "My Research Document"
+author: "Iago Pinal-Fernandez"
+date: last-modified
+format:
+  pdf: default
+  html: default
+filters:
+  - ./figure-table-formatter.py
+bibliography: references.bib
+---
+
+## Introduction
+
+This document discusses various experiments and their results. We will refer to several figures and tables throughout the text.
+
+In Experiment 1, we can see the results in [@fig:experiment1; @fig:experiment2; @fig:experiment4; @fig:experiment5] and @fig:experiment2. Also, here we illustrate an important finding ([@fig:experiment4; @fig:experiment1; @fig:experiment5; @fig:experiment4]).
+
+The analysis is summarized in @tbl:results and detailed further in @tbl:summary.
+
+Supplementary details can be found in @supfig:extra1 and @suptbl:appendixA.
+
+In addition to the figures and tables, further reading can be found in references @Pinal-Fernandez2024, and @Selva-OCallaghan2018. These references discuss the theoretical background and related work in this field.
+
+## Results
+
+The results show a significant improvement when comparing different methods. @fig:experiment1 and @fig:experiment2 highlight the trends observed.
+
+Moreover, @tbl:results and @tbl:summary provide comprehensive data supporting these findings.
+
+## Discussion
+
+We observed that the results align with previous studies [@Pinal-Fernandez2023a], which found similar trends. The supplementary materials (see @supfig:extra1 and @suptbl:appendixA) provide additional insights into the methodology.
+
+## Conclusion
+
+The Figure-Table-Formatter greatly enhances the clarity of our document by streamlining citation management for figures, tables, and references. We recommend using it for future documents to maintain a consistent style.
+
+## References
