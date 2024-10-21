@@ -1,8 +1,9 @@
-# Figure-Table-Formatter Documentation
+# Figure-Table-Formatter Quarto filter
 
 ## Overview
 
-The Figure-Table-Formatter is a Pandoc/Quarto filter designed to enhance citation management for figures, tables, supplementary figures, and supplementary tables within documents. It automatically formats citations based on their prefixes, ensuring consistent styling and handling of ranges in citation numbers.
+The Figure-Table-Formatter is a Quarto filter designed to format the cross-references for figures, supplementary figures, tables, and supplementary tables following their sequential order in the document.
+
 Key Features
 
 - Handles Multiple Citation Types: Supports citations starting with fig:, supfig:, tbl:, and suptbl:.
@@ -31,10 +32,8 @@ pip install pandocfilters
 To apply the filter to your Pandoc document, run the following command:
 
 ```bash
-pandoc input.md --filter ./figure_table_formatter.py -o output.md
+quarto add iagopinal/figure-table-formatter
 ```
-
-Replace input.md with your source document and output.md with your desired output file.
 
 ## Example YAML Front Matter
 
@@ -43,7 +42,7 @@ Here’s how you can structure a Markdown document with a YAML front matter whil
 ```markdown
 ---
 filters:
-  - ./figure_table_formatter.py
+  - iagopinal/figure_table_formatter
 ---
 
 # Introduction
@@ -91,7 +90,7 @@ The filter recognizes the following citation prefixes:
 
 ## Output File
 
-The filter will also create a file named citations_list.txt containing all unique citation IDs used in the document, in the order of their appearance. This can be used to generate a sorted list of tables and figures based in quarto.
+The filter will also create a file named figure_table_list.txt containing all unique citation IDs used in the document, in the order of their appearance. This can be used to generate a sorted list of tables and figures based in quarto.
 
 ## Logging
 

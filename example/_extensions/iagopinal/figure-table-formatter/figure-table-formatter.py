@@ -30,7 +30,7 @@ global_unique_citations = set()
 citation_order = []
 
 # File path to save the citations
-output_file = "citations_list.txt"
+output_file = "figure_table_list.txt"
 
 def get_citation_label(citation_id):
     """Get the label and type for the given citation ID."""

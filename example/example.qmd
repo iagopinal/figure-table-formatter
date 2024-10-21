@@ -6,7 +6,7 @@ format:
   pdf: default
   html: default
 filters:
-  - ./figure-table-formatter.py
+  - iagopinal/figure-table-formatter
 bibliography: references.bib
 ---
 
