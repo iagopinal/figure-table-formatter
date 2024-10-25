@@ -14,6 +14,7 @@ The Figure-Table-Formatter is a Quarto filter designed to format cross-reference
 - **Custom Figure/Table Order**: You can provide a custom order for figures and tables via an external file (`sorted_ids.txt`) for flexibility.
 - **Automatic Output of Object Order**: The script generates a `sorted_ids.txt` file listing the order of figures and tables as they are processed, which can be reused in other documents for consistency.
 - **Citation Logging**: Logs all citation IDs to a file for reference.
+- Automatic page break after objects.
 
 ## Usage
 
@@ -27,7 +28,7 @@ quarto add iagopinal/figure-table-formatter
 
 If no custom order file is provided, the filter will automatically generate a `sorted_ids.txt` file containing the figure and table IDs in the order they were processed. This file can be used to replicate the same order of objects in another document, ensuring consistency across multiple projects.
 
-## Example YAML Front Matter
+#### Example YAML Front Matter
 
 Here’s an example of a YAML front matter for a Markdown document using the Figure-Table-Formatter filter. Ensure the Python script is executable (e.g., `chmod 744 figure_table_formatter.py`).
 
@@ -107,13 +108,21 @@ The filter recognizes the following citation prefixes:
   - Consecutive citations are formatted as a range, e.g., "Figures 1-3".
   - Non-consecutive citations are separated by commas, e.g., "Figures 1, 3-4".
 
-## Output Files
+### Output Files
 
-The filter generates two output files:
+The filter generates an output file than can be used if the :
 - `sorted_ids.txt`: Lists all unique citation IDs used in the document, in either their order of appearance or as defined in a custom order file. This can be reused across documents.
-- `figure_table_list.txt`: Provides a list of all unique citation IDs for further reference or processing.
 
-## Logging
+This file can be used in other files setting up the file-import tag to the YAML of the Quarto document. This is useful if you want to generate a file for Supplementary Figures apart from the main file containing the text of the manuscript.
+
+```markdown
+---
+filters:
+  - iagopinal/figure_table_formatter
+- file-import: true
+---
+```
+### Logging
 
 The filter logs all citation processing and figure/table placements, which can be viewed in the terminal when the script is executed with logging enabled.
 

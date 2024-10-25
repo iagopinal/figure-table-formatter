@@ -32,6 +32,16 @@ pattern_placeholder = re.compile(r'&&&.*&&&')
 # File paths
 tag_file = "sorted_ids.txt"  # Input file to import sorted IDs and positions
 
+pagebreak = {
+    "epub": '<p style:"page-break-after: always;"> </p>',
+    "html": '<div style="page-break-after: always;"></div>',
+    "latex": '\\newpage{}',
+    "ooxml": '<w:p><w:r><w:br w:type="page"/></w:r></w:p>',
+    "odt": '<text:p text:style-name="Pagebreak"/>',
+    "context": '\\page',
+    "typst": '#pagebreak()'
+}
+
 def read_source():
     """Reads the input from stdin."""
     try:
@@ -160,6 +170,7 @@ def place_figs_tables(new_blocks, figure_table_blocks, output_format):
                     for tag in items_to_insert:
                         if tag not in used_tags:  # Check if tag has already been used
                             blocks_with_figs_tables.append(figure_table_blocks.pop(tag))
+                            blocks_with_figs_tables.append({"t":"RawBlock","c":[output_format, pagebreak[output_format]]})
                             used_tags.add(tag)
                 else:
                     logging.warning(f"No valid items to insert for placeholder: {structured_order}")
@@ -171,6 +182,7 @@ def place_figs_tables(new_blocks, figure_table_blocks, output_format):
     for tag in sorted_ids:
         if tag in figure_table_blocks and tag not in used_tags:
             blocks_with_figs_tables.append(figure_table_blocks.pop(tag))
+            blocks_with_figs_tables.append({"t":"RawBlock","c":[output_format, pagebreak[output_format]]})
             used_tags.add(tag)
 
     return blocks_with_figs_tables
