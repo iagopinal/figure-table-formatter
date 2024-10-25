@@ -1,7 +1,11 @@
-fig:experiment1
 fig:experiment2
 fig:experiment4
 fig:experiment5
+fig:experiment1
+supfig:experiment1
+suptbl:experiment2
+suptbl:experiment3
+tbl:experiment1
 tbl:results
 tbl:summary
 supfig:extra1

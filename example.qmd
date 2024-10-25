@@ -3,8 +3,11 @@ title: "My Research Document"
 author: "Iago Pinal-Fernandez"
 date: last-modified
 format:
-  pdf: default
+  pdf:
+    header-includes:
+      - \usepackage[labelformat=empty, font=bf]{caption}
   html: default
+  docx: default
 filters:
   - iagopinal/figure-table-formatter
 bibliography: references.bib
@@ -14,7 +17,7 @@ bibliography: references.bib
 
 This document discusses various experiments and their results. We will refer to several figures and tables throughout the text.
 
-In Experiment 1, we can see the results in [@fig:experiment1; @fig:experiment2; @fig:experiment4; @fig:experiment5] and @fig:experiment2. Also, here we illustrate an important finding ([@fig:experiment4; @fig:experiment1; @fig:experiment5; @fig:experiment4]).
+In Experiment 1, we can see the results in [@fig:experiment1; @fig:experiment2; @fig:experiment4; @fig:experiment5] and @fig:experiment2. Also, here we illustrate an important finding ([@fig:experiment4; @fig:experiment1; @supfig:experiment1; @fig:experiment5; @suptbl:experiment2; @fig:experiment4; @suptbl:experiment3; @tbl:experiment1]).
 
 The analysis is summarized in @tbl:results and detailed further in @tbl:summary.
 
@@ -28,12 +31,61 @@ The results show a significant improvement when comparing different methods. @fi
 
 Moreover, @tbl:results and @tbl:summary provide comprehensive data supporting these findings.
 
+| Col1 | Col2 | Col3 |
+|------|------|------|
+| A    | B    | C    |
+| E    | F    | G    |
+| A    | G    | G    |
+
+: #tbl:results Results
+
+See @tbl:results.
+
+![#supfig:experiment1 An elephant](elephant.png)
+
+```{r}
+#| fig-cap: "#fig:experiment1 More data"
+#| echo: false
+
+plot(cars)
+```
+
+| Col1 | Col2 | Col3 |
+|------|------|------|
+| A    | B    | C    |
+| E    | F    | G    |
+| A    | G    | G    |
+
+: #suptbl:appendixA More results.
+
 ## Discussion
 
-We observed that the results align with previous studies [@Pinal-Fernandez2023a], which found similar trends. The supplementary materials (see @supfig:extra1 and @suptbl:appendixA) provide additional insights into the methodology.
+We observed that the results align with previous studies [@Pinal-Fernandez2023a], which found similar trends. The supplementary materials (see @supfig:experiment1 and @suptbl:appendixA) provide additional insights into the methodology.
 
 ## Conclusion
 
-The Figure-Table-Formatter greatly enhances the clarity of our document by streamlining citation management for figures, tables, and references. We recommend using it for future documents to maintain a consistent style.
+The figure-tables-formatter filter automatically manages the figures, tables, and supplementary materials. Placeholders are used to insert these elements in the correct order and location:
+
+The filter ensures clear and concise management of references and visual elements.
+
+{{< pagebreak >}}
+
+## Tables and Figures
+
+&&&tbl,fig&&&
+
+{{< pagebreak >}}
+
+## Supplementary Figures
+
+&&&supfig&&&
+
+{{< pagebreak >}}
+
+## Supplementary Tables
+
+&&&suptbl&&&
+
+{{< pagebreak >}}
 
 ## References

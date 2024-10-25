@@ -1,145 +1,258 @@
 #!/usr/bin/env python3
 
+import json
+import io
 import sys
-from pandocfilters import toJSONFilter, Str, Cite
+import re
 import logging
+import codecs
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
-# Global dictionary to store citation counters
-counters = {
-    "fig": {},
-    "tbl": {},
-    "supfig": {},
-    "suptbl": {}
+# Initialize global variables
+sorted_ids = []
+sorted_positions = []
+
+# Objects dictionary and counters
+objects = {
+    "fig": "Figure",
+    "tbl": "Table",
+    "supfig": "Supplementary Figure",
+    "suptbl": "Supplementary Table"
 }
 
-# Global counter for each category
-counter_values = {
-    "fig": 1,
-    "tbl": 1,
-    "supfig": 1,
-    "suptbl": 1
-}
+# Initialize counters for each object type
+counters = {key: 0 for key in objects}
 
-# Set to track unique citation IDs across the entire document
-global_unique_citations = set()
+# Compile regex patterns for matching cross-references, tags, and placeholders
+pattern_crossref = re.compile(r"@(" + "|".join(objects.keys()) + r"):(\w+)")
+pattern_tag = re.compile(r"#(" + "|".join(objects.keys()) + r"):(\w+)")
+pattern_placeholder = re.compile(r'&&&.*&&&')
 
-# List to maintain the order of appearance of unique citations
-citation_order = []
+# File paths
+tag_file = "sorted_ids.txt"  # Input file to import sorted IDs and positions
 
-# File path to save the citations
-output_file = "figure_table_list.txt"
+def read_source():
+    """Reads the input from stdin."""
+    try:
+        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    except AttributeError:
+        input_stream = codecs.getreader("utf-8")(sys.stdin)
+    return input_stream.read()
 
-def get_citation_label(citation_id):
-    """Get the label and type for the given citation ID."""
-    if citation_id.startswith("fig:"):
-        return "Figure", "fig"
-    elif citation_id.startswith("tbl:"):
-        return "Table", "tbl"
-    elif citation_id.startswith("supfig:"):
-        return "Supplementary Figure", "supfig"
-    elif citation_id.startswith("suptbl:"):
-        return "Supplementary Table", "suptbl"
-    return None, None
+def format_citations(doc):
+    """Process citation blocks and format cross-references."""
+    for block in doc.get("blocks", []):
+        # Search for 'Cite' blocks within each block
+        for i, element in enumerate(block.get('c', [])):
+            if isinstance(element, dict) and element['t'] == 'Cite':
+                ids = get_ids(element)
+                if ids:
+                    for id in ids:
+                        if id not in sorted_ids:
+                            sorted_ids.append(id)
+                            category = id.split(":")[0]
+                            if category in counters:
+                                counters[category] += 1
+                                sorted_positions.append(counters[category])
+                    # Replace the citation block with formatted references
+                    block['c'][i] = {'t': 'Str', 'c': format_ids(ids)}
+                else:
+                    logging.warning(f"No IDs found in Cite block: {element}")
+    logging.info(f"Sorted IDs: {sorted_ids}")
+    logging.info(f"Counters: {counters}")
+    return doc
 
-def get_counter_for_citation(citation_id, citation_type):
-    """Retrieve or assign a counter for a citation."""
-    if citation_id not in counters[citation_type]:
-        counters[citation_type][citation_id] = counter_values[citation_type]
-        counter_values[citation_type] += 1
-    return counters[citation_type][citation_id]
+def get_ids(elements):
+    """Extract citation IDs from nested elements."""
+    matches = []
+    if isinstance(elements, list):
+        for element in elements:
+            matches.extend(get_ids(element))
+    elif isinstance(elements, dict):
+        content = elements.get('c')
+        if isinstance(content, list):
+            matches.extend(get_ids(content))
+        elif isinstance(content, str):
+            match = pattern_crossref.match(content)
+            if match:
+                category, identifier = match.groups()
+                matches.append(f"{category}:{identifier}")
+    return matches
 
-def format_citation_list(citation_list, label):
-    """Format a list of citation counters, merging consecutive numbers into ranges."""
-    if not citation_list:
-        return ""
+def format_range(numbers):
+    numbers = sorted(set(numbers))
+    ranges, start, last = [], numbers[0], numbers[0]
 
-    citation_list = sorted(map(int, citation_list))  # Sort the list of citation counters
-    ranges = []
-    range_start = citation_list[0]
-    prev = citation_list[0]
-
-    for current in citation_list[1:]:
-        if current == prev + 1:
-            # Continue the range
-            prev = current
+    for number in numbers[1:]:
+        if number == last + 1:
+            last = number
         else:
-            # End the current range and start a new one
-            if range_start == prev:
-                ranges.append(str(range_start))
-            else:
-                ranges.append(f"{range_start}-{prev}")
-            range_start = current
-            prev = current
+            ranges.append(f"{start}" if start == last else f"{start}-{last}")
+            start, last = number, number
+    ranges.append(f"{start}" if start == last else f"{start}-{last}")
+    return ', '.join(ranges)
 
-    # Add the last range
-    if range_start == prev:
-        ranges.append(str(range_start))
-    else:
-        ranges.append(f"{range_start}-{prev}")
+def format_ids(ids):
+    """Format citation IDs into human-readable references."""
+    categorized_ids = {key: [] for key in objects}
+    output = []
 
-    # Join the ranges with commas
-    if len(citation_list) == 1:
-        return f"{label} {ranges[0]}"
-    else:
-        return f"{label}s {', '.join(ranges)}"
+    for id in ids:
+        category = id.split(":")[0]
+        if category in categorized_ids:
+            categorized_ids[category].append(id)
 
-def replace_custom_citations(key, value, format, meta):
-    if key == 'Cite':
-        citations = value[0]  # The list of citations
-        local_unique_citations = set()  # Local set for each citation block
-        new_citation_texts = []
+    for key, label in objects.items():
+        list_order = [sorted_positions[sorted_ids.index(id)] for id in categorized_ids[key]]
+        if list_order:
+            ranges_formatted = format_range(list_order)
+            output.append(f"{label}{'s' if len(list_order) > 1 else ''} {ranges_formatted}")
 
-        # Dictionary to hold processed labels and counters
-        citation_groups = {"fig": [], "tbl": [], "supfig": [], "suptbl": []}
+    return ", ".join(output)
 
-        # Process each citation
-        for citation in citations:
-            citation_id = citation['citationId']  # Access the citation ID
-            label, citation_type = get_citation_label(citation_id)
+def collect_figs_tables(doc):
+    """Collect figure and table blocks by their identifiers."""
+    new_blocks, figure_table_blocks = [], {}
 
-            if label and citation_type:
-                # Only process citations with the correct prefix
-                if citation_id not in local_unique_citations:
-                    local_unique_citations.add(citation_id)
-                    # Add to the global unique citation set
-                    if citation_id not in global_unique_citations:
-                        global_unique_citations.add(citation_id)
-                        citation_order.append(citation_id)
-
-                    # Retrieve the counter for the citation and store it
-                    counter = get_counter_for_citation(citation_id, citation_type)
-                    citation_groups[citation_type].append(str(counter))
-
-        # Format the output for each citation group
-        formatted_citations = []
-        for citation_type, citation_list in citation_groups.items():
-            if citation_list:
-                # Format and append the formatted citations (handling ranges)
-                formatted_citations.append(format_citation_list(citation_list, get_citation_label(f'{citation_type}:')[0]))
-
-        # Join all the citation groups together
-        if formatted_citations:
-            new_citation_texts.append(Str("; ".join(formatted_citations)))
-
-        # Log citation groups for debugging
-        logging.info(f"Citations processed: {new_citation_texts}")
-        
-        # Return the modified citation as a string
-        if new_citation_texts:
-            return new_citation_texts  # Only return modified texts if there's a match
+    for block in doc.get("blocks", []):
+        block_str = str(block)
+        match = pattern_tag.search(block_str)
+        if match:
+            identifier = match.group(2)
+            tag = f"{match.group(1)}:{identifier}"
+            if tag in sorted_ids:
+                new_tag = f"{format_ids([tag])}. "
+                block = json.dumps(block)
+                block = block.replace("#" + tag, new_tag)
+                block = json.loads(block)
+                figure_table_blocks[tag] = block
+                logging.info(f"Tag found: {tag}")
         else:
-            return None  # Ignore citations that don't match the prefixes
+            new_blocks.append(block)
+
+    return new_blocks, figure_table_blocks
+
+# Function to place figures and tables
+def place_figs_tables(new_blocks, figure_table_blocks, output_format):
+    """Detect placeholders and insert figure/table blocks in the correct positions."""
+    blocks_with_figs_tables = []
+    used_tags = set()  # Track already inserted items
+
+    for block in new_blocks:
+        block_str = str(block)
+        matches = pattern_placeholder.findall(block_str)
+
+        if matches:
+            for match in matches:
+                structured_order = match.strip("&&&")  # Strip the new placeholder delimiters
+                logging.info(f"Placeholder: {structured_order}")
+
+                # If no comma, treat as a single group or a single element
+                groups = [structured_order] if ',' not in structured_order else structured_order.split(',')
+
+                # Collect all items that need to be inserted based on the group(s)
+                items_to_insert = [tag for group in groups for tag in sorted_ids
+                                   if tag.startswith(tuple(group.split('-'))) and tag in figure_table_blocks]
+
+                # Insert a page break before items and the items themselves
+                if items_to_insert:
+                    for tag in items_to_insert:
+                        if tag not in used_tags:  # Check if tag has already been used
+                            blocks_with_figs_tables.append(figure_table_blocks.pop(tag))
+                            used_tags.add(tag)
+                else:
+                    logging.warning(f"No valid items to insert for placeholder: {structured_order}")
+        else:
+            # If the block is not a placeholder, retain it as-is
+            blocks_with_figs_tables.append(block)
+
+    # Insert remaining items (if any) that were not placed during placeholder insertion
+    for tag in sorted_ids:
+        if tag in figure_table_blocks and tag not in used_tags:
+            blocks_with_figs_tables.append(figure_table_blocks.pop(tag))
+            used_tags.add(tag)
+
+    return blocks_with_figs_tables
+ 
+def import_ids_from_file():
+    """Read sorted_ids and sorted_positions from an external file, and update counters based on tag order."""
+    try:
+        # Clear sorted_ids and sorted_positions to avoid duplicates
+        sorted_ids.clear()
+        sorted_positions.clear()
+        logging.info(f"Sorted IDS is {sorted_ids}")
+
+        # Reset counters for each object type
+        counters.update({key: 0 for key in objects})
+
+        with open(tag_file, 'r') as f:
+            for line in f:
+                tags = line.strip().split()
+                for tag in tags:
+                    category = tag.split(":")[0]
+                    if category in objects.keys():
+                        # Update the counter for the category
+                        counters[category] += 1
+                        # Append the tag and its position
+                        sorted_ids.append(tag)
+                        sorted_positions.append(counters[category])
+                    else:
+                        logging.warning(f"Unknown category in tag: {tag}")
+
+        logging.info(f"Imported sorted_ids: {sorted_ids}")
+        logging.info(f"Imported sorted_positions: {sorted_positions}")
+        logging.info(f"Updated counters: {counters}")
+
+    except FileNotFoundError:
+        logging.error(f"Input file {tag_file} not found.")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"Error processing the file: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    # Apply the filter to collect citations
-    toJSONFilter(replace_custom_citations)
+    try:
+        input_stream = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    except AttributeError:
+        # Python 2 does not have sys.stdin.buffer.
+        # REF: https://stackoverflow.com/questions/2467928/python-unicodeencode
+        input_stream = codecs.getreader("utf-8")(sys.stdin)
 
-    # After processing, save the citation list to a file
-    with open(output_file, "w") as f:
-        for citation_id in citation_order:
-            f.write(citation_id + "\n")
+    source = input_stream.read()
 
-    logging.info(f"Unique citations saved to {output_file}")
+    try:
+        doc = json.loads(source)
+
+        if len(sys.argv) > 1:
+            format = sys.argv[1]
+        else:
+            format = ""
+
+        # Check for the metadata flag in the document
+        use_file_import = doc.get('meta', {}).get('file-import', {}).get('c', {})
+        logging.info(format)
+
+        if use_file_import:
+            # Import sorted_ids and sorted_positions from file
+            logging.info("Importing sorted_ids and sorted_positions from file.")
+            import_ids_from_file()
+        else:
+            # Process citations if no file import
+            logging.info("Running format_citations.")
+             
+        altered = format_citations(doc)
+
+        # Save citation list to file
+        with open(tag_file, "w") as f:
+            for citation_id in sorted_ids:
+                f.write(f"{citation_id}\n")
+
+        # Collect and place figures/tables
+        new_blocks, figure_table_blocks = collect_figs_tables(altered if not use_file_import else doc)
+        doc["blocks"] = place_figs_tables(new_blocks, figure_table_blocks, format)
+
+        # Output the final document
+        sys.stdout.write(json.dumps(doc))
+    except json.JSONDecodeError:
+        logging.error("Failed to decode JSON input")
