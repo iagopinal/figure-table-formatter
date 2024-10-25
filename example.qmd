@@ -10,7 +10,7 @@ format:
   docx: default
 filters:
   - iagopinal/figure-table-formatter
-bibliography: references.bib
+bibliography: assets/references.bib
 ---
 
 ## Introduction
@@ -37,14 +37,14 @@ Moreover, @tbl:results and @tbl:summary provide comprehensive data supporting th
 | E    | F    | G    |
 | A    | G    | G    |
 
-: #tbl:results Results
+: #tbl:results Results.
 
 See @tbl:results.
 
-![#supfig:experiment1 An elephant](elephant.png)
+![#supfig:experiment1 Antibodies inside of cells in myositis.](assets/internalization.jpg)
 
 ```{r}
-#| fig-cap: "#fig:experiment1 More data"
+#| fig-cap: "#fig:experiment1 More data."
 #| echo: false
 
 plot(cars)
