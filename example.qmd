@@ -58,10 +58,6 @@ plot(cars)
 
 : #suptbl:appendixA More results.
 
-## Discussion
-
-We observed that the results align with previous studies [@Pinal-Fernandez2023a], which found similar trends. The supplementary materials (see @supfig:experiment1 and @suptbl:appendixA) provide additional insights into the methodology.
-
 ## Conclusion
 
 The figure-tables-formatter filter automatically manages the figures, tables, and supplementary materials. Placeholders are used to insert these elements in the correct order and location:
