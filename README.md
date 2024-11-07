@@ -119,7 +119,7 @@ This file can be used in other files setting up the file-import tag to the YAML 
 ---
 filters:
   - iagopinal/figure_table_formatter
-- file-import: true
+file-import: true
 ---
 ```
 ### Logging
