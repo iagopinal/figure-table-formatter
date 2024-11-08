@@ -138,6 +138,8 @@ def collect_figs_tables(doc):
                 block = json.loads(block)
                 figure_table_blocks[tag] = block
                 logging.info(f"Tag found: {tag}")
+            else:
+                new_blocks.append(block)
         else:
             new_blocks.append(block)
 
