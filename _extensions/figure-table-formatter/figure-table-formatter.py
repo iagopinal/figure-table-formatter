@@ -36,7 +36,7 @@ pagebreak = {
     "epub": '<p style:"page-break-after: always;"> </p>',
     "html": '<div style="page-break-after: always;"></div>',
     "latex": '\\newpage{}',
-    "ooxml": '<w:p><w:r><w:br w:type="page"/></w:r></w:p>',
+    "docx": '<w:p><w:r><w:br w:type="page"/></w:r></w:p>',
     "odt": '<text:p text:style-name="Pagebreak"/>',
     "context": '\\page',
     "typst": '#pagebreak()'
