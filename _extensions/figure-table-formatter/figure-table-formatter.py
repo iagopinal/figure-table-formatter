@@ -84,7 +84,7 @@ def get_ids(elements):
         if isinstance(content, list):
             matches.extend(get_ids(content))
         elif isinstance(content, str):
-            match = pattern_crossref.match(content)
+            match = pattern_crossref.match(content.strip("[]"))
             if match:
                 category, identifier = match.groups()
                 matches.append(f"{category}:{identifier}")
